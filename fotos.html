@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload para Google Drive</title>
+    <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+    <h1>Upload para Google Drive</h1>
+    <input type="file" id="fileInput" multiple>
+    <button onclick="uploadFiles()">Enviar Arquivos</button>
+
+    <script>
+        const CLIENT_ID = '502880291071-bnnac5n75ahv6ag6qjr4fhmesv8ceq07.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyDa5i5Kp3UqSpI17VTtdMvsVibKUj1JlXA';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+        function handleClientLoad() {
+            gapi.load('client:auth2', initClient);
+        }
+
+        function initClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                clientId: CLIENT_ID,
+                scope: SCOPES
+            }).then(() => {
+                console.log('Cliente inicializado');
+            });
+        }
+
+        async function uploadFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+
+            for (let file of files) {
+                try {
+                    const metadata = {
+                        name: file.name,
+                        mimeType: file.type
+                    };
+
+                    const formData = new FormData();
+                    formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    formData.append('file', file);
+
+                    const response = await gapi.client.request({
+                        path: 'https://www.googleapis.com/upload/drive/v3/files',
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    console.log('Arquivo enviado:', response);
+                    alert(`${file.name} enviado com sucesso!`);
+                } catch (error) {
+                    console.error('Erro no upload:', error);
+                    alert(`Erro ao enviar ${file.name}`);
+                }
+            }
+        }
+
+        gapi.load('client', initClient);
+    </script>
+</body>
+</html>
