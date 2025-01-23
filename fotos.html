@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Upload para Google Drive</title>
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://www.googleapis.com;">
     <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
 </head>
 <body>
     <h1>Upload para Google Drive</h1>
@@ -12,14 +12,32 @@
     <button onclick="uploadFiles()">Enviar Arquivos</button>
 
     <script>
-        const API_KEY = '1c199610fce431f22b166f885c72f1cbbe7f5c08';
-        
+        // Substitua com o conteúdo do seu arquivo JSON de credenciais
+        const serviceAccount = {
+            "type": "service_account",
+            "project_id": "seu-projeto-id",
+            "private_key_id": "1c199610fce431f22b166f885c72f1cbbe7f5c08",
+            "private_key": "sua-chave-privada",
+            "client_email": "seu-email@seu-projeto.iam.gserviceaccount.com",
+            "client_id": "502880291071-bnnac5n75ahv6ag6qjr4fhmesv8ceq07.apps.googleusercontent.com"
+        };
+
+        async function getAccessToken() {
+            // Esta função deve ser implementada no backend
+            // Não é seguro gerar tokens no frontend
+            const response = await fetch('sua-api-backend/get-token');
+            const data = await response.json();
+            return data.access_token;
+        }
+
         async function uploadFiles() {
             const fileInput = document.getElementById('fileInput');
             const files = fileInput.files;
 
-            for (let file of files) {
-                try {
+            try {
+                const accessToken = await getAccessToken();
+
+                for (let file of files) {
                     const metadata = {
                         name: file.name,
                         mimeType: file.type
@@ -32,18 +50,22 @@
                     const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${API_KEY}`
+                            'Authorization': `Bearer ${accessToken}`
                         },
                         body: form
                     });
 
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
                     const result = await response.json();
                     console.log('Arquivo enviado:', result);
                     alert(`${file.name} enviado com sucesso!`);
-                } catch (error) {
-                    console.error('Erro no upload:', error);
-                    alert(`Erro ao enviar ${file.name}`);
                 }
+            } catch (error) {
+                console.error('Erro no upload:', error);
+                alert(`Erro ao enviar arquivo: ${error.message}`);
             }
         }
     </script>
